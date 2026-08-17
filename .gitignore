@@ -1,0 +1,18 @@
+# Environment configuration
+.env
+
+# Composer dependencies
+/vendor/
+
+# Logs and temporary files
+*.log
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
