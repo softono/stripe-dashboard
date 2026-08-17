@@ -81,25 +81,6 @@ function getStripeSecretKey(): ?string
 }
 
 /**
- * Get Stripe Public Key (prioritizing encrypted Session, then fallback to .env)
- */
-function getStripePublicKey(): ?string
-{
-    if (!empty($_SESSION['stripe_public_key_enc'])) {
-        $decrypted = decryptData((string)$_SESSION['stripe_public_key_enc']);
-        if (!empty($decrypted)) {
-            return trim($decrypted);
-        }
-    }
-    // Backward compatibility for raw session if any
-    if (!empty($_SESSION['stripe_public_key'])) {
-        return trim((string)$_SESSION['stripe_public_key']);
-    }
-    $fromEnv = env('STRIPE_PUBLIC_KEY');
-    return !empty($fromEnv) ? trim((string)$fromEnv) : null;
-}
-
-/**
  * Check if Stripe key is configured
  */
 function hasStripeKey(): bool

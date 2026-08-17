@@ -17,14 +17,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if ($action === 'disconnect') {
         unset(
             $_SESSION['stripe_secret_key_enc'],
-            $_SESSION['stripe_public_key_enc'],
-            $_SESSION['stripe_secret_key'],
-            $_SESSION['stripe_public_key']
+            $_SESSION['stripe_secret_key']
         );
-        $successMessage = 'Stripe API keys have been removed from your current session.';
+        $successMessage = 'Stripe Secret Key has been removed from your current session.';
     } elseif ($action === 'save') {
         $secretKey = isset($_POST['stripe_secret_key']) ? trim($_POST['stripe_secret_key']) : '';
-        $publicKey = isset($_POST['stripe_public_key']) ? trim($_POST['stripe_public_key']) : '';
 
         if (empty($secretKey)) {
             $errorMessage = 'Stripe Secret Key is required.';
@@ -37,14 +34,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 // Verify by fetching account balance
                 $testClient->balance->retrieve();
 
-                // Successfully verified! Save encrypted keys to session
+                // Successfully verified! Save encrypted key to session
                 $_SESSION['stripe_secret_key_enc'] = encryptData($secretKey);
-                $_SESSION['stripe_public_key_enc'] = $publicKey !== '' ? encryptData($publicKey) : null;
 
                 // Ensure raw keys are not kept in session
-                unset($_SESSION['stripe_secret_key'], $_SESSION['stripe_public_key']);
+                unset($_SESSION['stripe_secret_key']);
 
-                $successMessage = 'Stripe API keys encrypted, verified, and saved to session!';
+                $successMessage = 'Stripe Secret Key encrypted, verified, and saved to session!';
             } catch (\Stripe\Exception\AuthenticationException $e) {
                 $errorMessage = 'Authentication failed: The provided Stripe secret key was rejected by Stripe API.';
             } catch (\Stripe\Exception\ApiErrorException $e) {
@@ -57,7 +53,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 }
 
 $currentSecret = getStripeSecretKey();
-$currentPublic = getStripePublicKey();
 $stripeMode = getStripeMode();
 $isConnected = !empty($currentSecret);
 
@@ -68,7 +63,7 @@ require_once __DIR__ . '/templates/header.php';
 <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
         <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Stripe API Connection</h1>
-        <p class="text-sm text-slate-500 mt-1">Manage and store Stripe API keys in your active session.</p>
+        <p class="text-sm text-slate-500 mt-1">Manage and store your Stripe Secret Key in your active session.</p>
     </div>
     <div class="flex items-center gap-3">
         <a href="index.php" class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold px-3.5 py-2 rounded-lg shadow-xs transition">
@@ -108,10 +103,10 @@ require_once __DIR__ . '/templates/header.php';
     <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8">
             <h2 class="text-lg font-bold text-slate-900 mb-1">
-                <?= $isConnected ? 'Update Stripe API Keys' : 'Connect Stripe Account' ?>
+                <?= $isConnected ? 'Update Stripe Secret Key' : 'Connect Stripe Account' ?>
             </h2>
             <p class="text-xs text-slate-500 mb-6">
-                Keys submitted here are verified against Stripe live and securely stored in your session.
+                Your key is verified live against Stripe and securely stored in your active session.
             </p>
 
             <form method="POST" action="connect.php" class="space-y-5">
@@ -136,23 +131,6 @@ require_once __DIR__ . '/templates/header.php';
                     <p class="mt-1 text-2xs text-slate-400">
                         Use a test secret key (<code class="bg-slate-100 px-1 py-0.5 rounded">sk_test_...</code>) or restricted key (<code class="bg-slate-100 px-1 py-0.5 rounded">rk_test_...</code>).
                     </p>
-                </div>
-
-                <!-- Public Key Input -->
-                <div>
-                    <label for="stripe_public_key" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Stripe Publishable Key <span class="text-slate-400 text-2xs font-normal">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <input 
-                            id="stripe_public_key" 
-                            name="stripe_public_key" 
-                            type="text" 
-                            placeholder="pk_test_..." 
-                            value="<?= htmlspecialchars($currentPublic ?? '') ?>"
-                            class="w-full font-mono text-sm px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-stripe-500/20 focus:border-stripe-500 transition"
-                        >
-                    </div>
                 </div>
 
                 <!-- Submit / Save Button -->
@@ -204,28 +182,20 @@ require_once __DIR__ . '/templates/header.php';
                             <?= htmlspecialchars(substr($currentSecret, 0, 10) . '••••••••' . substr($currentSecret, -4)) ?>
                         </span>
                     </div>
-                    <?php if ($currentPublic): ?>
-                        <div>
-                            <span class="text-slate-400 font-medium block">Public Key</span>
-                            <span class="font-mono text-2xs text-slate-700 bg-slate-100 px-2 py-1 rounded block truncate mt-0.5">
-                                <?= htmlspecialchars(substr($currentPublic, 0, 10) . '••••••••' . substr($currentPublic, -4)) ?>
-                            </span>
-                        </div>
-                    <?php endif; ?>
 
                     <div class="pt-4 border-t border-slate-100">
-                        <form method="POST" action="connect.php" onsubmit="return confirm('Are you sure you want to disconnect your Stripe keys from this session?');">
+                        <form method="POST" action="connect.php" onsubmit="return confirm('Are you sure you want to disconnect your Stripe key from this session?');">
                             <input type="hidden" name="action" value="disconnect">
                             <button type="submit" class="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                Disconnect Keys
+                                Disconnect Key
                             </button>
                         </form>
                     </div>
                 </div>
             <?php else: ?>
                 <div class="text-xs text-slate-500 space-y-2">
-                    <p>No keys currently active in your session.</p>
+                    <p>No Stripe key active in your session.</p>
                     <p class="text-slate-400 text-2xs">Enter your secret key on the left to start inspecting Stripe customers, transactions, and subscriptions.</p>
                 </div>
             <?php endif; ?>
@@ -235,10 +205,10 @@ require_once __DIR__ . '/templates/header.php';
         <div class="bg-stripe-50 border border-stripe-100 rounded-2xl p-6 text-xs text-slate-700">
             <h4 class="font-bold text-stripe-900 mb-1.5 flex items-center gap-1.5">
                 <svg class="w-4 h-4 text-stripe-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Where to find your keys
+                Where to find your key
             </h4>
             <p class="text-slate-600 leading-relaxed mb-3">
-                You can get your test API keys directly from your Stripe Dashboard developers portal.
+                You can find your test secret key (<code class="bg-white/80 px-1 py-0.5 rounded text-2xs font-mono">sk_test_...</code>) in your Stripe Dashboard developers portal.
             </p>
             <a href="https://dashboard.stripe.com/test/apikeys" target="_blank" rel="noreferrer" class="inline-flex items-center gap-1 text-stripe-600 font-semibold hover:underline">
                 Stripe API Keys Portal &rarr;
