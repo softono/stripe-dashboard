@@ -35,7 +35,7 @@ function getLoggedInEmail(): string
  */
 function encryptData(string $data): string
 {
-    $salt = env('ADMIN_PASSWORD') ?: 'stripe_testkit_secret_salt';
+    $salt = env('ADMIN_PASSWORD') ?: 'stripe_dashboard_secret_salt';
     $key = hash('sha256', $salt . '__session_vault__', true);
     $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
     $encrypted = openssl_encrypt($data, 'aes-256-cbc', $key, 0, $iv);
@@ -50,7 +50,7 @@ function decryptData(?string $encoded): ?string
     if (empty($encoded)) {
         return null;
     }
-    $salt = env('ADMIN_PASSWORD') ?: 'stripe_testkit_secret_salt';
+    $salt = env('ADMIN_PASSWORD') ?: 'stripe_dashboard_secret_salt';
     $key = hash('sha256', $salt . '__session_vault__', true);
     $decoded = base64_decode($encoded, true);
     if (!$decoded || !str_contains($decoded, '::')) {

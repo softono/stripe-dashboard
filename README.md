@@ -1,4 +1,4 @@
-# Stripe Testing Dashboard (TestKit)
+# Stripe Testing Dashboard
 
 A Core PHP dashboard and resource management interface for Stripe testing built directly with `stripe/stripe-php` and Tailwind CSS CDN.
 
